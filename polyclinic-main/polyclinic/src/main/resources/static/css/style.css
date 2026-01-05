@@ -144,7 +144,7 @@ transition: all 0.3s ease;
 }
 
 .department-card:hover .department-icon {
-transform: scale(1.1) rotate(5deg);
+transform: scale(1.1) ;
 background: linear-gradient(135deg, var(--primary) 0%, #0099ff 100%);
 }
 

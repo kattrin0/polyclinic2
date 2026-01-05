@@ -179,12 +179,6 @@ const MyAppointmentsPage = {
     template: `
     <div>
         <!-- Шапка -->
-        <div class="profile-header">
-            <div class="container">
-                <h2><i class="bi bi-calendar-check me-2"></i> Мои записи</h2>
-                <p class="opacity-75 mb-0">История и предстоящие приёмы</p>
-            </div>
-        </div>
 
         <div class="container py-5">
             <div class="row">
@@ -481,7 +475,7 @@ const BookAppointmentPage = {
 
                                 <!-- Примечания -->
                                 <div class="mb-4">
-                                    <label class="form-label">Примечания (необязательно)</label>
+                                    <label class="form-label">Примечания</label>
                                     <textarea v-model="form.notes" class="form-control" rows="3"
                                               placeholder="Опишите симптомы или причину обращения"></textarea>
                                 </div>
@@ -493,7 +487,7 @@ const BookAppointmentPage = {
                                     </router-link>
                                     <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
                                         <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-                                        <i v-else class="bi bi-calendar-check me-1"></i>
+
                                         {{ loading ? 'Запись...' : 'Записаться' }}
                                     </button>
                                 </div>

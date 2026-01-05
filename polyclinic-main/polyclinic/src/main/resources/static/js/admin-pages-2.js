@@ -856,11 +856,23 @@ const AdminDepartments = {
 const AdminAppointments = {
     template: `
     <div>
+        <div v-if="success" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i> {{ success }}
+            <button type="button" class="btn-close" @click="success = null"></button>
+        </div>
+        <div v-if="error" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle me-2"></i> {{ error }}
+            <button type="button" class="btn-close" @click="error = null"></button>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="mb-1">Управление записями</h4>
                 <p class="text-muted mb-0">Всего: {{ filteredAppointments.length }} записей</p>
             </div>
+            <button class="btn btn-primary" @click="openCreateModal">
+                <i class="bi bi-plus-lg me-1"></i> Добавить запись
+            </button>
         </div>
 
         <!-- Фильтры -->
@@ -868,7 +880,7 @@ const AdminAppointments = {
             <div class="card-body">
                 <div class="row g-3">
                     <!-- Фильтр по статусу -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small text-muted">Статус</label>
                         <select v-model="filters.status" class="form-select" @change="currentPage = 0">
                             <option :value="null">Все статусы</option>
@@ -878,12 +890,23 @@ const AdminAppointments = {
                         </select>
                     </div>
 
+                    <!-- Фильтр по отделению -->
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Отделение</label>
+                        <select v-model="filters.departmentId" class="form-select" @change="currentPage = 0">
+                            <option :value="null">Все отделения</option>
+                            <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                                {{ dept.name }}
+                            </option>
+                        </select>
+                    </div>
+
                     <!-- Фильтр по врачу -->
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label small text-muted">Врач</label>
                         <select v-model="filters.doctorId" class="form-select" @change="currentPage = 0">
                             <option :value="null">Все врачи</option>
-                            <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
+                            <option v-for="doc in filteredDoctors" :key="doc.id" :value="doc.id">
                                 {{ doc.fullName }}
                             </option>
                         </select>
@@ -925,6 +948,7 @@ const AdminAppointments = {
                                 <th>Услуга</th>
                                 <th>Дата</th>
                                 <th>Статус</th>
+                                <th class="text-end">Цена</th>
                                 <th class="text-end">Действия</th>
                             </tr>
                         </thead>
@@ -941,6 +965,9 @@ const AdminAppointments = {
                                     </span>
                                 </td>
                                 <td class="text-end">
+                                    <strong class="text-primary">{{ formatPrice(app.price) }} ₽</strong>
+                                </td>
+                                <td class="text-end">
                                     <button class="btn btn-sm btn-outline-danger" @click="deleteAppointment(app)">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -952,30 +979,95 @@ const AdminAppointments = {
             </div>
 
             <!-- ПАГИНАЦИЯ -->
-            <div v-if="totalPages > 1" class="card-footer bg-white py-3">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mb-0">
-                        <li class="page-item" :class="{ disabled: currentPage === 0 }">
-                            <button class="page-link" @click="currentPage--">
-                                <i class="bi bi-chevron-left"></i>
-                            </button>
-                        </li>
-                        <li class="page-item disabled">
-                            <span class="page-link text-muted">
-                                Страница {{ currentPage + 1 }} из {{ totalPages }}
-                            </span>
-                        </li>
-                        <li class="page-item" :class="{ disabled: currentPage >= totalPages - 1 }">
-                            <button class="page-link" @click="currentPage++">
-                                <i class="bi bi-chevron-right"></i>
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+            <div v-if="totalPages > 1" class="card-footer bg-white">
+                <pagination-component
+                    :current-page="currentPage"
+                    :total-pages="totalPages"
+                    @page-change="goToPage"
+                />
             </div>
 
             <div v-if="filteredAppointments.length === 0" class="p-5 text-center text-muted">
                 Записи не найдены
+            </div>
+        </div>
+
+        <!-- Модальное окно создания записи -->
+        <div class="modal fade" id="appointmentModal" tabindex="-1" ref="appointmentModal">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <form @submit.prevent="saveAppointment">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-calendar-plus me-2"></i> Новая запись
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Пациент *</label>
+                                    <select v-model="form.patientId" class="form-select" required>
+                                        <option :value="null">Выберите пациента</option>
+                                        <option v-for="patient in patients" :key="patient.id" :value="patient.id">
+                                            {{ patient.fullName }} ({{ patient.email }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Отделение *</label>
+                                    <select v-model="form.departmentId" class="form-select" required @change="updateDoctorsByDepartment">
+                                        <option :value="null">Выберите отделение</option>
+                                        <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                                            {{ dept.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Врач *</label>
+                                    <select v-model="form.doctorId" class="form-select" required @change="updateServicesByDoctor">
+                                        <option :value="null">Выберите врача</option>
+                                        <option v-for="doc in availableDoctors" :key="doc.id" :value="doc.id">
+                                            {{ doc.fullName }} - {{ doc.specialization }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Услуга *</label>
+                                    <select v-model="form.serviceId" class="form-select" required>
+                                        <option :value="null">Выберите услугу</option>
+                                        <option v-for="service in availableServices" :key="service.id" :value="service.id">
+                                            {{ service.name }} - {{ formatPrice(service.price) }} ₽
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Дата *</label>
+                                    <input type="date" v-model="form.appointmentDate" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Время *</label>
+                                    <input type="time" v-model="form.appointmentTime" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Примечания</label>
+                                <textarea v-model="form.notes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary" :disabled="saving">
+                                <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+                                Создать запись
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -984,14 +1076,35 @@ const AdminAppointments = {
         return {
             appointments: [],
             doctors: [],
+            departments: [],
+            patients: [],
+            services: [],
             loading: false,
+            saving: false,
+            success: null,
+            error: null,
             currentPage: 0,
             pageSize: 20,
-            // Добавил dateFrom и dateTo в фильтры
-            filters: { status: null, doctorId: null, dateFrom: null, dateTo: null }
+            filters: { status: null, doctorId: null, departmentId: null, dateFrom: null, dateTo: null },
+            form: { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '' },
+            modal: null
         };
     },
     computed: {
+        filteredDoctors() {
+            if (!this.filters.departmentId) return this.doctors;
+            return this.doctors.filter(d => d.departmentId === this.filters.departmentId);
+        },
+        availableDoctors() {
+            if (!this.form.departmentId) return [];
+            return this.doctors.filter(d => d.departmentId === this.form.departmentId && d.active);
+        },
+        availableServices() {
+            if (!this.form.doctorId) return [];
+            const doctor = this.doctors.find(d => d.id === this.form.doctorId);
+            if (!doctor) return [];
+            return this.services.filter(s => s.departmentId === doctor.departmentId);
+        },
         filteredAppointments() {
             let result = this.appointments;
 
@@ -1000,23 +1113,31 @@ const AdminAppointments = {
                 result = result.filter(a => a.status === this.filters.status);
             }
 
-            // 2. Фильтр по врачу
+            // 2. Фильтр по отделению
+            if (this.filters.departmentId) {
+                result = result.filter(a => {
+                    const doc = this.doctors.find(d => d.fullName === a.doctorName);
+                    return doc && doc.departmentId === this.filters.departmentId;
+                });
+            }
+
+            // 3. Фильтр по врачу
             if (this.filters.doctorId) {
                 const doc = this.doctors.find(d => d.id === this.filters.doctorId);
                 if (doc) result = result.filter(a => a.doctorName === doc.fullName);
             }
 
-            // 3. Фильтр: Дата ОТ (Начало дня)
+            // 4. Фильтр: Дата ОТ (Начало дня)
             if (this.filters.dateFrom) {
                 const fromDate = new Date(this.filters.dateFrom);
-                fromDate.setHours(0, 0, 0, 0); // Сбрасываем время на начало суток
+                fromDate.setHours(0, 0, 0, 0);
                 result = result.filter(a => new Date(a.appointmentDate) >= fromDate);
             }
 
-            // 4. Фильтр: Дата ДО (Конец дня)
+            // 5. Фильтр: Дата ДО (Конец дня)
             if (this.filters.dateTo) {
                 const toDate = new Date(this.filters.dateTo);
-                toDate.setHours(23, 59, 59, 999); // Устанавливаем время на самый конец суток
+                toDate.setHours(23, 59, 59, 999);
                 result = result.filter(a => new Date(a.appointmentDate) <= toDate);
             }
 
@@ -1032,11 +1153,15 @@ const AdminAppointments = {
         }
     },
     async mounted() {
+        this.modal = new bootstrap.Modal(this.$refs.appointmentModal);
         this.loading = true;
         try {
-            const [appsResponse, docs] = await Promise.all([
+            const [appsResponse, docs, pats, servs, depts] = await Promise.all([
                 API.appointments.getAll({ size: 10000 }),
-                API.doctors.getAll()
+                API.doctors.getAll(),
+                API.appointments.getPatients(),
+                API.services.getAll(),
+                API.departments.getAll()
             ]);
             // Обработка ответа: может быть массив или объект Page от Spring
             if (Array.isArray(appsResponse)) {
@@ -1047,25 +1172,71 @@ const AdminAppointments = {
                 this.appointments = [];
             }
             this.doctors = docs;
+            this.patients = pats || [];
+            this.services = servs || [];
+            this.departments = depts || [];
         } catch (e) {
             console.error("Ошибка загрузки данных", e);
             this.appointments = [];
+            this.error = 'Ошибка загрузки данных';
         } finally {
             this.loading = false;
         }
     },
     methods: {
         resetFilters() {
-            // Сброс всех фильтров, включая даты
-            this.filters = { status: null, doctorId: null, dateFrom: null, dateTo: null };
+            // Сброс всех фильтров, включая даты и отделения
+            this.filters = { status: null, doctorId: null, departmentId: null, dateFrom: null, dateTo: null };
             this.currentPage = 0;
         },
+        openCreateModal() {
+            this.form = { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '' };
+            this.modal.show();
+        },
+        updateDoctorsByDepartment() {
+            this.form.doctorId = null;
+            this.form.serviceId = null;
+        },
+        updateServicesByDoctor() {
+            this.form.serviceId = null;
+        },
+        async saveAppointment() {
+            this.saving = true;
+            this.error = null;
+            try {
+                await API.appointments.createByAdmin({
+                    patientId: this.form.patientId,
+                    doctorId: this.form.doctorId,
+                    serviceId: this.form.serviceId,
+                    appointmentDate: this.form.appointmentDate,
+                    appointmentTime: this.form.appointmentTime,
+                    notes: this.form.notes
+                });
+                this.success = 'Запись создана успешно';
+                this.modal.hide();
+                // Перезагружаем записи
+                const appsResponse = await API.appointments.getAll({ size: 10000 });
+                if (Array.isArray(appsResponse)) {
+                    this.appointments = appsResponse;
+                } else if (appsResponse && appsResponse.content) {
+                    this.appointments = appsResponse.content;
+                }
+            } catch (e) {
+                this.error = e.response?.data?.message || 'Ошибка создания записи';
+            } finally {
+                this.saving = false;
+            }
+        },
         formatDate(d) { return Store.formatDate(d); },
+        formatPrice(p) { return Store.formatPrice(p); },
         getStatusClass(s) {
             if (s === 'Запланирован') return 'bg-primary';
             if (s === 'Завершен') return 'bg-success';
             if (s === 'Отменен') return 'bg-secondary';
             return 'bg-secondary';
+        },
+        goToPage(page) {
+            this.currentPage = page;
         },
         deleteAppointment(a) {
             if(confirm('Удалить эту запись?')) {

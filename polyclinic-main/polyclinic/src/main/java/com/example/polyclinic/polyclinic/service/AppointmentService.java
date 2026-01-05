@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,8 +56,8 @@ public class AppointmentService {
     /**
      * Получить записи с фильтрацией
      */
-    public Page<AppointmentDTO> getAppointmentsFiltered(String status, Integer doctorId, Pageable pageable) {
-        return appointmentRepository.findAllFiltered(status, doctorId, pageable)
+    public Page<AppointmentDTO> getAppointmentsFiltered(String status, Integer doctorId, Integer departmentId, Pageable pageable) {
+        return appointmentRepository.findAllFiltered(status, doctorId, departmentId, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -118,6 +119,45 @@ public class AppointmentService {
         if (appointmentDateTime.isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Нельзя записаться на прошедшую дату");
         }
+
+        // Создаём запись
+        Appointment appointment = new Appointment();
+        appointment.setPatient(patient);
+        appointment.setDoctor(doctor);
+        appointment.setService(service);
+        appointment.setAppointmentDate(appointmentDateTime);
+        appointment.setPrice(service.getPrice());
+        appointment.setStatus(STATUS_SCHEDULED);
+
+        if (dto.getNotes() != null && !dto.getNotes().trim().isEmpty()) {
+            appointment.setNotes(dto.getNotes().trim());
+        }
+
+        appointmentRepository.save(appointment);
+    }
+
+    /**
+     * Создание записи администратором (без проверки email пользователя)
+     */
+    @Transactional
+    public void createAppointmentByAdmin(AppointmentCreateDTO dto) {
+        // Находим пациента по ID
+        Patient patient = patientRepository.findById(dto.getPatientId())
+                .orElseThrow(() -> new RuntimeException("Пациент не найден"));
+
+        // Находим врача
+        Doctor doctor = doctorRepository.findById(dto.getDoctorId())
+                .orElseThrow(() -> new RuntimeException("Врач не найден"));
+
+        // Находим услугу
+        com.example.polyclinic.polyclinic.entity.Service service =
+                serviceRepository.findById(dto.getServiceId())
+                        .orElseThrow(() -> new RuntimeException("Услуга не найдена"));
+
+        // Парсим дату и время
+        LocalDate date = LocalDate.parse(dto.getAppointmentDate());
+        LocalTime time = LocalTime.parse(dto.getAppointmentTime());
+        LocalDateTime appointmentDateTime = LocalDateTime.of(date, time);
 
         // Создаём запись
         Appointment appointment = new Appointment();
@@ -220,6 +260,20 @@ public class AppointmentService {
 
     public long count() {
         return appointmentRepository.count();
+    }
+
+    // ================== ПОЛУЧЕНИЕ ПАЦИЕНТОВ ==================
+
+    public List<Map<String, Object>> getAllPatients() {
+        return patientRepository.findAll().stream()
+                .map(p -> {
+                    Map<String, Object> patientMap = new java.util.HashMap<>();
+                    patientMap.put("id", p.getId());
+                    patientMap.put("fullName", p.getUser() != null ? p.getUser().getFullName() : "Неизвестно");
+                    patientMap.put("email", p.getUser() != null ? p.getUser().getEmail() : "");
+                    return patientMap;
+                })
+                .collect(Collectors.toList());
     }
 
     // ================== КОНВЕРТАЦИЯ ==================

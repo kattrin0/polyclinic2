@@ -45,7 +45,7 @@ const AdminSidebar = {
         </div>
         <nav class="nav flex-column">
             <router-link class="nav-link" :class="{ active: activePage === 'dashboard' }" to="/admin">
-                <i class="bi bi-speedometer2 me-2"></i> Дашборд
+                <i class="bi bi-clipboard-data"></i> Дашборд
             </router-link>
             <router-link class="nav-link" :class="{ active: activePage === 'users' }" to="/admin/users">
                 <i class="bi bi-people me-2"></i> Пользователи
@@ -96,7 +96,7 @@ const AdminDashboard = {
     template: `
     <div>
         <h4 class="mb-4">
-            <i class="bi bi-speedometer2 me-2"></i>Панель управления
+            Панель управления
         </h4>
 
         <loading-spinner v-if="loading" message="Загрузка статистики..." />
@@ -163,14 +163,9 @@ const AdminDashboard = {
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
-                                    <i class="bi bi-calendar-event text-primary fs-3"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-muted mb-1">Записей за этот месяц</h6>
-                                    <h3 class="mb-0">{{ stats.appointmentsThisMonth || 0 }}</h3>
-                                </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Записей за этот месяц</h6>
+                                <h3 class="mb-0 fw-bold">{{ stats.appointmentsThisMonth || 0 }}</h3>
                             </div>
                         </div>
                     </div>
@@ -178,14 +173,9 @@ const AdminDashboard = {
                 <div class="col-md-6">
                     <div class="card border-0 shadow-sm h-100">
                         <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-success bg-opacity-10 rounded-3 p-3 me-3">
-                                    <i class="bi bi-currency-dollar text-success fs-3"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-muted mb-1">Выручка за месяц</h6>
-                                    <h3 class="mb-0 text-success">{{ formatPrice(stats.revenueThisMonth) }} ₽</h3>
-                                </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Выручка за месяц</h6>
+                                <h3 class="mb-0 text-success fw-bold">{{ formatPrice(stats.revenueThisMonth) }} ₽</h3>
                             </div>
                         </div>
                     </div>

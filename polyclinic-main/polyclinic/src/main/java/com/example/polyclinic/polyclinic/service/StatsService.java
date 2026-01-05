@@ -40,6 +40,7 @@ public class StatsService {
         LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime sixMonthsAgo = now.minusMonths(6);
         LocalDateTime oneYearAgo = now.minusYears(1);
+        LocalDateTime twelveMonthsAgo = now.minusMonths(12);
 
         // Базовая статистика
         stats.setUsersCount(userRepository.count());
@@ -69,8 +70,8 @@ public class StatsService {
         // Популярные врачи
         stats.setPopularDoctors(getPopularDoctors(sixMonthsAgo, 5));
 
-        // Месячная статистика
-        stats.setMonthlyStats(getMonthlyStats(sixMonthsAgo));
+        // Месячная статистика (за последний год)
+        stats.setMonthlyStats(getMonthlyStats(twelveMonthsAgo));
 
         // Статистика по отделениям
         stats.setDepartmentStats(getDepartmentStats(oneYearAgo));
@@ -86,8 +87,8 @@ public class StatsService {
                             toInteger(row[0]),
                             (String) row[1],
                             (String) row[2],
-                            toLong(row[3]),
-                            toBigDecimal(row[4])
+                            toLong(row[4]),  // количество завершенных записей
+                            toBigDecimal(row[5])  // выручка от завершенных записей
                     ))
                     .collect(Collectors.toList());
         } catch (Exception e) {

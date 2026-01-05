@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class AppointmentCreateDTO {
     private Integer serviceId;
     private Integer doctorId;
+    private Integer patientId;
     private String appointmentDate;
     private String appointmentTime;
     private String notes;
@@ -17,6 +18,9 @@ public class AppointmentCreateDTO {
 
     public Integer getDoctorId() { return doctorId; }
     public void setDoctorId(Integer doctorId) { this.doctorId = doctorId; }
+
+    public Integer getPatientId() { return patientId; }
+    public void setPatientId(Integer patientId) { this.patientId = patientId; }
 
     public String getAppointmentDate() { return appointmentDate; }
     public void setAppointmentDate(String appointmentDate) { this.appointmentDate = appointmentDate; }

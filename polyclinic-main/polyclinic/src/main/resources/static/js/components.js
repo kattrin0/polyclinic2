@@ -64,11 +64,7 @@ const NavbarComponent = {
                                         <i class="bi bi-person me-2"></i>Мой профиль
                                     </router-link>
                                 </li>
-                                <li>
-                                    <router-link class="dropdown-item" to="/my-appointments">
-                                        <i class="bi bi-calendar-check me-2"></i>Мои записи
-                                    </router-link>
-                                </li>
+
                                 <!-- Только для админа -->
                                 <template v-if="isAdmin">
                                     <li><hr class="dropdown-divider"></li>

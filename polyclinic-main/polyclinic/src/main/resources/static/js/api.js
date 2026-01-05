@@ -165,8 +165,13 @@ const API = {
             if (params.size) query.append('size', params.size);
             if (params.status) query.append('status', params.status);
             if (params.doctorId) query.append('doctorId', params.doctorId);
+            if (params.departmentId) query.append('departmentId', params.departmentId);
 
             const response = await axios.get(`/appointments?${query}`);
+            return response.data;
+        },
+        async createByAdmin(data) {
+            const response = await axios.post('/appointments/admin', data);
             return response.data;
         },
         async getMy() {
@@ -187,6 +192,10 @@ const API = {
         },
         async delete(id) {
             await axios.delete(`/appointments/${id}`);
+        },
+        async getPatients() {
+            const response = await axios.get('/appointments/patients');
+            return response.data;
         }
     },
 

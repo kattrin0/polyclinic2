@@ -8,7 +8,7 @@ const HomePage = {
     <div>
         <!-- Hero Section -->
         <section class="hero-section bg-primary text-white py-5">
-            <div class="container py-5">
+            <div class="container py-4">
                 <div class="row align-items-center">
                     <div class="col-lg-6">
 
@@ -18,22 +18,7 @@ const HomePage = {
                         <p class="lead mb-4 opacity-75">
                             Передовые технологии диагностики, опытные специалисты и индивидуальный подход к каждому пациенту.
                         </p>
-                        <div class="d-flex gap-3 flex-wrap">
-                            <router-link v-if="isAuthenticated" to="/book-appointment" class="btn btn-light btn-lg px-4">
-                                <i class="bi bi-calendar-plus me-2"></i> Записаться на приём
-                            </router-link>
-                            <router-link v-else to="/register" class="btn btn-light btn-lg px-4">
-                                <i class="bi bi-calendar-plus me-2"></i> Записаться на приём
-                            </router-link>
-                            <router-link to="/services" class="btn btn-outline-light btn-lg px-4">
-                                Наши услуги <i class="bi bi-arrow-right ms-2"></i>
-                            </router-link>
-                        </div>
-
-
-                    </div>
-
-                </div>
+                 </div>
             </div>
         </section>
 
@@ -41,7 +26,7 @@ const HomePage = {
         <section class="py-5 bg-light">
             <div class="container py-4">
                 <div class="text-center mb-5">
-                    <span class="badge bg-primary-subtle text-primary mb-2">Отделения</span>
+
                     <h2 class="fw-bold">Направления нашей работы</h2>
                     <p class="text-muted">Полный спектр медицинских услуг в одном месте</p>
                 </div>
@@ -67,8 +52,8 @@ const HomePage = {
         <section class="py-5">
             <div class="container py-4">
                 <div class="text-center mb-5">
-                    <span class="badge bg-primary-subtle text-primary mb-2">Услуги</span>
-                    <h2 class="fw-bold">Услуги</h2>
+
+                    <h2 class="fw-bold">Наши услуги</h2>
 
                 </div>
 
@@ -108,11 +93,11 @@ const HomePage = {
             </div>
         </section>
 
-        <!-- Врачи (БЕЗ ФОТО И СТАТУСА) -->
+        <!-- Врачи  -->
         <section class="py-5 bg-light">
             <div class="container py-4">
                 <div class="text-center mb-5">
-                    <span class="badge bg-primary-subtle text-primary mb-2">Команда</span>
+
                     <h2 class="fw-bold">Наши специалисты</h2>
                     <p class="text-muted">Опытные врачи с многолетним стажем работы</p>
                 </div>
@@ -121,13 +106,11 @@ const HomePage = {
                     <div v-for="doctor in activeDoctors.slice(0, 4)" :key="doctor.id" class="col-sm-6 col-lg-3">
                         <div class="card h-100 border-0 shadow-sm doctor-card">
                             <div class="card-body text-center py-4">
-                                <div class="doctor-avatar mb-3">
-                                    <i class="bi bi-person-circle"></i>
-                                </div>
+
                                 <h5 class="card-title fw-bold mb-1">{{ doctor.fullName }}</h5>
                                 <p class="text-primary mb-1">{{ doctor.specialization }}</p>
                                 <p class="text-muted small mb-3">
-                                    <i class="bi bi-building me-1"></i>{{ doctor.departmentName }}
+                                    {{ doctor.departmentName }}
                                 </p>
                                 <button class="btn btn-primary btn-sm w-100" @click="bookDoctor(doctor)">
                                     <i class="bi bi-calendar-check me-1"></i> Записаться
@@ -190,7 +173,7 @@ const ServicesPage = {
         <div class="container">
             <div class="text-center mb-5">
                 <h1 class="fw-bold">Наши услуги</h1>
-                <p class="text-muted lead">Полный спектр медицинских услуг по доступным ценам</p>
+
             </div>
 
             <!-- Фильтр -->
@@ -199,7 +182,6 @@ const ServicesPage = {
                     <div class="row align-items-center">
                         <div class="col-md-4 col-lg-3">
                             <div class="d-flex align-items-center">
-                                <i class="bi bi-funnel text-primary me-2"></i>
                                 <select v-model="selectedDepartment" class="form-select">
                                     <option :value="null">Все отделения</option>
                                     <option v-for="dept in departments" :key="dept.id" :value="dept.name">
@@ -328,7 +310,7 @@ const DoctorsPage = {
                     <div class="row align-items-center">
                         <div class="col-md-4 col-lg-3">
                             <div class="d-flex align-items-center">
-                                <i class="bi bi-funnel text-primary me-2"></i>
+
                                 <select v-model="selectedDepartment" class="form-select">
                                     <option :value="null">Все отделения</option>
                                     <option v-for="dept in departments" :key="dept.id" :value="dept.name">
@@ -362,13 +344,11 @@ const DoctorsPage = {
                 <div v-for="doctor in filteredDoctors" :key="doctor.id" class="col-sm-6 col-lg-4 col-xl-3">
                     <div class="card h-100 border-0 shadow-sm doctor-card">
                         <div class="card-body text-center py-4">
-                            <div class="doctor-avatar mb-3">
-                                <i class="bi bi-person-circle"></i>
-                            </div>
+
                             <h5 class="card-title fw-bold mb-1">{{ doctor.fullName }}</h5>
                             <p class="text-primary mb-1">{{ doctor.specialization }}</p>
                             <p class="text-muted small mb-3">
-                                <i class="bi bi-building me-1"></i> {{ doctor.departmentName }}
+                                {{ doctor.departmentName }}
                             </p>
                             <button class="btn btn-primary w-100" @click="bookDoctor(doctor)">
                                 <i class="bi bi-calendar-check me-1"></i> Записаться на приём

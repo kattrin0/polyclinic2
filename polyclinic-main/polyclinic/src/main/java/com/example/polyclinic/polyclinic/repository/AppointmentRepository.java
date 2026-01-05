@@ -24,10 +24,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Фильтрация с пагинацией
     @Query("SELECT a FROM Appointment a " +
             "WHERE (:status IS NULL OR a.status = :status) " +
-            "AND (:doctorId IS NULL OR a.doctor.id = :doctorId)")
+            "AND (:doctorId IS NULL OR a.doctor.id = :doctorId) " +
+            "AND (:departmentId IS NULL OR a.doctor.department.id = :departmentId)")
     Page<Appointment> findAllFiltered(
             @Param("status") String status,
             @Param("doctorId") Integer doctorId,
+            @Param("departmentId") Integer departmentId,
             Pageable pageable);
 
     // Подсчёт записей за период
@@ -40,12 +42,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     BigDecimal sumRevenueByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     // Популярные услуги
-    @Query("SELECT s.id, s.name, s.department.name, COUNT(a), COALESCE(SUM(a.price), 0) " +
+    @Query("SELECT s.id, s.name, s.department.name, COUNT(a), " +
+            "SUM(CASE WHEN a.status = 'Завершен' THEN 1 ELSE 0 END), " +
+            "COALESCE(SUM(CASE WHEN a.status = 'Завершен' THEN a.price ELSE 0 END), 0) " +
             "FROM Appointment a " +
             "JOIN a.service s " +
             "WHERE a.appointmentDate >= :since " +
             "GROUP BY s.id, s.name, s.department.name " +
-            "ORDER BY COUNT(a) DESC")
+            "ORDER BY SUM(CASE WHEN a.status = 'Завершен' THEN 1 ELSE 0 END) DESC")
     List<Object[]> findPopularServices(@Param("since") LocalDateTime since, Pageable pageable);
 
     // Популярные врачи
