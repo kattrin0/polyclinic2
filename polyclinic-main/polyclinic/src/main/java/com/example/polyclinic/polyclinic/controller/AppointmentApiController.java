@@ -27,6 +27,7 @@ public class AppointmentApiController {
     @GetMapping
     public ResponseEntity<Page<AppointmentDTO>> getAllAppointments(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer doctorId,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -35,7 +36,8 @@ public class AppointmentApiController {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, 20, sort);
+        int pageSize = (size != null && size > 0) ? size : 20;
+        Pageable pageable = PageRequest.of(page, pageSize, sort);
 
         return ResponseEntity.ok(appointmentService.getAppointmentsFiltered(status, doctorId, pageable));
     }

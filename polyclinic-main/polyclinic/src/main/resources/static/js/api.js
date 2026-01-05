@@ -162,6 +162,7 @@ const API = {
                 sortBy: params.sortBy || 'id',
                 sortDir: params.sortDir || 'desc'
             });
+            if (params.size) query.append('size', params.size);
             if (params.status) query.append('status', params.status);
             if (params.doctorId) query.append('doctorId', params.doctorId);
 

@@ -1034,14 +1034,22 @@ const AdminAppointments = {
     async mounted() {
         this.loading = true;
         try {
-            const [apps, docs] = await Promise.all([
+            const [appsResponse, docs] = await Promise.all([
                 API.appointments.getAll({ size: 10000 }),
                 API.doctors.getAll()
             ]);
-            this.appointments = Array.isArray(apps) ? apps : (apps.content || []);
+            // Обработка ответа: может быть массив или объект Page от Spring
+            if (Array.isArray(appsResponse)) {
+                this.appointments = appsResponse;
+            } else if (appsResponse && appsResponse.content) {
+                this.appointments = appsResponse.content;
+            } else {
+                this.appointments = [];
+            }
             this.doctors = docs;
         } catch (e) {
             console.error("Ошибка загрузки данных", e);
+            this.appointments = [];
         } finally {
             this.loading = false;
         }
