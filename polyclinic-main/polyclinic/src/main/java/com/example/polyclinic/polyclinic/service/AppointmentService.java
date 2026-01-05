@@ -166,7 +166,13 @@ public class AppointmentService {
         appointment.setService(service);
         appointment.setAppointmentDate(appointmentDateTime);
         appointment.setPrice(service.getPrice());
-        appointment.setStatus(STATUS_SCHEDULED);
+        
+        // Используем статус из DTO, если указан, иначе по умолчанию "Запланирован"
+        if (dto.getStatus() != null && !dto.getStatus().trim().isEmpty()) {
+            appointment.setStatus(dto.getStatus().trim());
+        } else {
+            appointment.setStatus(STATUS_SCHEDULED);
+        }
 
         if (dto.getNotes() != null && !dto.getNotes().trim().isEmpty()) {
             appointment.setNotes(dto.getNotes().trim());

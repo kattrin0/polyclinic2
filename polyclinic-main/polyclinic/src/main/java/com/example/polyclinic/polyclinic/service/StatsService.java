@@ -151,19 +151,47 @@ public class StatsService {
 
     private List<DepartmentStatsDTO> getDepartmentStats(LocalDateTime since) {
         try {
-            List<Object[]> results = appointmentRepository.findDepartmentStats(since);
-            return results.stream()
-                    .map(row -> {
+            // Получаем все отделения
+            List<com.example.polyclinic.polyclinic.entity.Department> allDepartments = 
+                    departmentRepository.findAll();
+            
+            // Получаем статистику по отделениям с записями
+            List<Object[]> appointmentStats = appointmentRepository.findDepartmentStats(since);
+            Map<Integer, Object[]> statsMap = appointmentStats.stream()
+                    .collect(Collectors.toMap(
+                            row -> toInteger(row[0]),
+                            row -> row,
+                            (first, second) -> first
+                    ));
+            
+            // Создаем DTO для всех отделений
+            return allDepartments.stream()
+                    .map(dept -> {
                         DepartmentStatsDTO dto = new DepartmentStatsDTO();
-                        dto.setId(toInteger(row[0]));
-                        dto.setName((String) row[1]);
-                        dto.setDoctorsCount(toLong(row[2]));
-                        dto.setAppointmentsCount(toLong(row[3]));
-                        dto.setCompletedCount(toLong(row[4]));
-                        dto.setTotalRevenue(toBigDecimal(row[5]));
+                        dto.setId(dept.getId());
+                        dto.setName(dept.getName());
+                        
+                        // Получаем статистику из записей, если есть
+                        Object[] stats = statsMap.get(dept.getId());
+                        if (stats != null) {
+                            dto.setDoctorsCount(toLong(stats[2]));
+                            dto.setAppointmentsCount(toLong(stats[3]));
+                            dto.setCompletedCount(toLong(stats[4]));
+                            dto.setTotalRevenue(toBigDecimal(stats[5]));
+                        } else {
+                            // Если нет записей, устанавливаем нули
+                            dto.setDoctorsCount(0L);
+                            dto.setAppointmentsCount(0L);
+                            dto.setCompletedCount(0L);
+                            dto.setTotalRevenue(BigDecimal.ZERO);
+                        }
+                        
+                        // Подсчитываем реальное количество врачей в отделении
+                        long actualDoctorsCount = doctorRepository.findByDepartmentId(dept.getId()).size();
+                        dto.setDoctorsCount(actualDoctorsCount);
 
-                        // Топ врачи отделения
-                        dto.setTopDoctors(getDoctorStatsByDepartment(dto.getId(), since, 3));
+                        // Топ врачи отделения (показываем всех врачей, не только с записями)
+                        dto.setTopDoctors(getAllDoctorsByDepartment(dept.getId(), since));
 
                         return dto;
                     })
@@ -188,6 +216,54 @@ public class StatsService {
                     ))
                     .collect(Collectors.toList());
         } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private List<DoctorStatsDTO> getAllDoctorsByDepartment(Integer departmentId, LocalDateTime since) {
+        try {
+            // Получаем всех врачей отделения
+            List<com.example.polyclinic.polyclinic.entity.Doctor> allDoctors = 
+                    doctorRepository.findByDepartmentId(departmentId);
+            
+            // Получаем статистику по врачам с записями
+            List<Object[]> appointmentStats = appointmentRepository.findDoctorStatsByDepartment(
+                    departmentId, since, PageRequest.of(0, 1000)); // Большой лимит, чтобы получить всех
+            Map<Integer, Object[]> statsMap = appointmentStats.stream()
+                    .collect(Collectors.toMap(
+                            row -> toInteger(row[0]),
+                            row -> row,
+                            (first, second) -> first
+                    ));
+            
+            // Создаем DTO для всех врачей
+            return allDoctors.stream()
+                    .map(doctor -> {
+                        Object[] stats = statsMap.get(doctor.getId());
+                        if (stats != null) {
+                            return new DoctorStatsDTO(
+                                    doctor.getId(),
+                                    doctor.getUser().getFullName(),
+                                    doctor.getSpecialization(),
+                                    toLong(stats[3]),
+                                    toBigDecimal(stats[4])
+                            );
+                        } else {
+                            // Врач без записей
+                            return new DoctorStatsDTO(
+                                    doctor.getId(),
+                                    doctor.getUser().getFullName(),
+                                    doctor.getSpecialization(),
+                                    0L,
+                                    BigDecimal.ZERO
+                            );
+                        }
+                    })
+                    .sorted((a, b) -> Long.compare(b.getAppointmentsCount(), a.getAppointmentsCount()))
+                    .limit(3)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }

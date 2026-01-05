@@ -8,6 +8,7 @@ public class ServiceDTO {
     private String description;
     private BigDecimal price;
     private String departmentName;
+    private Integer departmentId;
 
     public ServiceDTO() {}
 
@@ -18,6 +19,16 @@ public class ServiceDTO {
         this.description = description;
         this.price = price;
         this.departmentName = departmentName;
+    }
+
+    public ServiceDTO(Integer id, String name, String description,
+                      BigDecimal price, String departmentName, Integer departmentId) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.departmentName = departmentName;
+        this.departmentId = departmentId;
     }
 
     public Integer getId() { return id; }
@@ -34,4 +45,7 @@ public class ServiceDTO {
 
     public String getDepartmentName() { return departmentName; }
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+
+    public Integer getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
 }

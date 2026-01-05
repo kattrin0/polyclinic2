@@ -114,7 +114,8 @@ public class ServiceService {
                 service.getName(),
                 service.getDescription(),
                 service.getPrice(),
-                service.getDepartmentName()
+                service.getDepartmentName(),
+                service.getDepartment() != null ? service.getDepartment().getId() : null
         );
     }
 }

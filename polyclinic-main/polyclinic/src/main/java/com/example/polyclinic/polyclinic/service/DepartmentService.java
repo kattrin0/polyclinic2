@@ -49,6 +49,11 @@ public class DepartmentService {
 
     @Transactional
     public void createDepartment(DepartmentDTO dto) {
+        // Проверка на уникальность имени
+        if (departmentRepository.findByName(dto.getName()).isPresent()) {
+            throw new RuntimeException("Отделение с таким названием уже существует");
+        }
+        
         Department department = new Department(dto.getName(), dto.getDescription());
         departmentRepository.save(department);
     }

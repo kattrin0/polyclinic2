@@ -1054,6 +1054,16 @@ const AdminAppointments = {
                                     <input type="time" v-model="form.appointmentTime" class="form-control" required>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Статус *</label>
+                                    <select v-model="form.status" class="form-select" required>
+                                        <option value="Запланирован">Запланирован</option>
+                                        <option value="Завершен">Завершен</option>
+                                        <option value="Отменен">Отменен</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label">Примечания</label>
                                 <textarea v-model="form.notes" class="form-control" rows="3"></textarea>
@@ -1086,7 +1096,7 @@ const AdminAppointments = {
             currentPage: 0,
             pageSize: 20,
             filters: { status: null, doctorId: null, departmentId: null, dateFrom: null, dateTo: null },
-            form: { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '' },
+            form: { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '', status: 'Запланирован' },
             modal: null
         };
     },
@@ -1100,10 +1110,8 @@ const AdminAppointments = {
             return this.doctors.filter(d => d.departmentId === this.form.departmentId && d.active);
         },
         availableServices() {
-            if (!this.form.doctorId) return [];
-            const doctor = this.doctors.find(d => d.id === this.form.doctorId);
-            if (!doctor) return [];
-            return this.services.filter(s => s.departmentId === doctor.departmentId);
+            if (!this.form.departmentId) return [];
+            return this.services.filter(s => s.departmentId === this.form.departmentId);
         },
         filteredAppointments() {
             let result = this.appointments;
@@ -1190,7 +1198,7 @@ const AdminAppointments = {
             this.currentPage = 0;
         },
         openCreateModal() {
-            this.form = { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '' };
+            this.form = { patientId: null, departmentId: null, doctorId: null, serviceId: null, appointmentDate: '', appointmentTime: '', notes: '', status: 'Запланирован' };
             this.modal.show();
         },
         updateDoctorsByDepartment() {
@@ -1204,13 +1212,22 @@ const AdminAppointments = {
             this.saving = true;
             this.error = null;
             try {
+                // Проверка обязательных полей
+                if (!this.form.patientId || !this.form.doctorId || !this.form.serviceId || 
+                    !this.form.appointmentDate || !this.form.appointmentTime || !this.form.status) {
+                    this.error = 'Пожалуйста, заполните все обязательные поля';
+                    this.saving = false;
+                    return;
+                }
+                
                 await API.appointments.createByAdmin({
                     patientId: this.form.patientId,
                     doctorId: this.form.doctorId,
                     serviceId: this.form.serviceId,
                     appointmentDate: this.form.appointmentDate,
                     appointmentTime: this.form.appointmentTime,
-                    notes: this.form.notes
+                    notes: this.form.notes,
+                    status: this.form.status
                 });
                 this.success = 'Запись создана успешно';
                 this.modal.hide();

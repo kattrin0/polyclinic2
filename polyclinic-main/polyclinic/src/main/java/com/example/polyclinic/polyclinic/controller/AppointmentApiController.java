@@ -99,6 +99,10 @@ public class AppointmentApiController {
             if (request.containsKey("notes")) {
                 dto.setNotes((String) request.get("notes"));
             }
+            
+            if (request.containsKey("status")) {
+                dto.setStatus((String) request.get("status"));
+            }
 
             appointmentService.createAppointmentByAdmin(dto);
             return ResponseEntity.ok(Map.of("message", "Запись создана успешно"));
